@@ -1,13 +1,14 @@
-package nft
+package team
 
 import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/game-of-nfts/gon-toolbox/nft/types"
 	"github.com/xuri/excelize/v2"
 )
 
-type TokenDataTeam struct {
+type TokenData struct {
 	Type          string `json:"type,omitempty"`
 	Flow          string `json:"flow,class_id"`
 	Battons       string `json:"battons,omitempty"`
@@ -15,19 +16,19 @@ type TokenDataTeam struct {
 	StartHeight   string `json:"start_height,omitempty"`
 }
 
-type InputTemplateTeam struct {
-	InputTemplate
-	TokenData []TokenDataTeam
+type Template struct {
+	types.BaseTemplate
+	TokenData []TokenData
 }
 
-func (t InputTemplateTeam) Generate(outputFile string) error {
-	tokens := make([]TokenInfo, 0, len(t.TokenData))
+func (t Template) Generate() error {
+	tokens := make([]types.TokenInfo, 0, len(t.TokenData))
 	for i, data := range t.TokenData {
 		bz, err := json.Marshal(data)
 		if err != nil {
 			return err
 		}
-		tokens = append(tokens, TokenInfo{
+		tokens = append(tokens, types.TokenInfo{
 			ID:        t.TokenBaseInfo[i].ID,
 			ClassID:   t.TokenBaseInfo[i].ClassID,
 			Name:      t.TokenBaseInfo[i].Name,
@@ -38,14 +39,14 @@ func (t InputTemplateTeam) Generate(outputFile string) error {
 			Data:      string(bz),
 		})
 	}
-	return GenerateToken(outputFile, t.SheetClass, tokens)
+	return t.GenerateToken(t.Args.OutputPath, tokens)
 }
 
-func (t InputTemplateTeam) FromXLSX(file string) (Template, error) {
-	f, err := excelize.OpenFile(file)
+func (t Template) ReadFromXLSX(args types.InputArgs) (types.Template, error) {
+	f, err := excelize.OpenFile(args.TokenFile)
 	if err != nil {
 		fmt.Println(err)
-		return InputTemplateTeam{}, err
+		return Template{}, err
 	}
 
 	defer func() {
@@ -55,26 +56,26 @@ func (t InputTemplateTeam) FromXLSX(file string) (Template, error) {
 		}
 	}()
 
-	class, err := t.readClass(f)
+	class, err := t.ReadClass(f)
 	if err != nil {
 		fmt.Println(err)
-		return InputTemplateTeam{}, err
+		return Template{}, err
 	}
 
-	tokenBaseInfo, err := t.readTokenBaseInfo(f)
+	tokenBaseInfo, err := t.ReadTokenBaseInfo(f)
 	if err != nil {
 		fmt.Println(err)
-		return InputTemplateTeam{}, err
+		return Template{}, err
 	}
 
 	tokenData, err := t.readTokenData(f)
 	if err != nil {
 		fmt.Println(err)
-		return InputTemplateTeam{}, err
+		return Template{}, err
 	}
 
-	return InputTemplateTeam{
-		InputTemplate: InputTemplate{
+	return Template{
+		BaseTemplate: types.BaseTemplate{
 			SheetClass:    class,
 			TokenBaseInfo: tokenBaseInfo,
 		},
@@ -82,8 +83,8 @@ func (t InputTemplateTeam) FromXLSX(file string) (Template, error) {
 	}, nil
 }
 
-func (InputTemplateTeam) readTokenData(xlsxFile *excelize.File) (infos []TokenDataTeam, err error) {
-	rows, err := xlsxFile.GetRows(SheetTokenData)
+func (Template) readTokenData(xlsxFile *excelize.File) (infos []TokenData, err error) {
+	rows, err := xlsxFile.GetRows(types.SheetTokenData)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func (InputTemplateTeam) readTokenData(xlsxFile *excelize.File) (infos []TokenDa
 
 	for _, dataRow := range dataRows {
 		fmt.Println("data", dataRow)
-		infos = append(infos, TokenDataTeam{
+		infos = append(infos, TokenData{
 			Type:          dataRow[0],
 			Flow:          dataRow[1],
 			Battons:       dataRow[2],

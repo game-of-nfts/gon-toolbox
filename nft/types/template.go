@@ -1,4 +1,4 @@
-package nft
+package types
 
 import (
 	"errors"
@@ -17,12 +17,6 @@ const (
 	TemplateQuiz       = "quiz"
 	TemplateTeam       = "team"
 )
-
-var TemplateReader = map[string]Template{
-	TemplateIndividual: InputTemplateIndividual{},
-	TemplateQuiz:       InputTemplateQuiz{},
-	TemplateTeam:       InputTemplateTeam{},
-}
 
 type Class struct {
 	ID               string `json:"id,omitempty"`
@@ -59,16 +53,18 @@ type TokenInfo struct {
 	Data      string `json:"data,omitempty"`
 }
 
-type InputTemplate struct {
+type BaseTemplate struct {
 	SheetClass    Class
 	TokenBaseInfo []TokenBaseInfo
+	Args          InputArgs
 }
 
 type Template interface {
-	FromXLSX(file string) (Template, error)
+	ReadFromXLSX(args InputArgs) (Template, error)
+	Generate() error
 }
 
-func GenerateToken(outputFile string, class Class, tokens []TokenInfo) error {
+func (t BaseTemplate) GenerateToken(outputPath string, tokens []TokenInfo) error {
 	f := excelize.NewFile()
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -96,17 +92,17 @@ func GenerateToken(outputFile string, class Class, tokens []TokenInfo) error {
 	f.SetCellValue(SheetClass, "K1", "Data")
 
 	// Set class data
-	f.SetCellValue(SheetClass, "A2", class.ID)
-	f.SetCellValue(SheetClass, "B2", class.Name)
-	f.SetCellValue(SheetClass, "C2", class.Schema)
-	f.SetCellValue(SheetClass, "D2", class.Creator)
-	f.SetCellValue(SheetClass, "E2", class.Symbol)
-	f.SetCellValue(SheetClass, "F2", class.MintRestricted)
-	f.SetCellValue(SheetClass, "G2", class.UpdateRestricted)
-	f.SetCellValue(SheetClass, "H2", class.Description)
-	f.SetCellValue(SheetClass, "I2", class.Uri)
-	f.SetCellValue(SheetClass, "J2", class.UriHash)
-	f.SetCellValue(SheetClass, "K2", class.Data)
+	f.SetCellValue(SheetClass, "A2", t.SheetClass.ID)
+	f.SetCellValue(SheetClass, "B2", t.SheetClass.Name)
+	f.SetCellValue(SheetClass, "C2", t.SheetClass.Schema)
+	f.SetCellValue(SheetClass, "D2", t.SheetClass.Creator)
+	f.SetCellValue(SheetClass, "E2", t.SheetClass.Symbol)
+	f.SetCellValue(SheetClass, "F2", t.SheetClass.MintRestricted)
+	f.SetCellValue(SheetClass, "G2", t.SheetClass.UpdateRestricted)
+	f.SetCellValue(SheetClass, "H2", t.SheetClass.Description)
+	f.SetCellValue(SheetClass, "I2", t.SheetClass.Uri)
+	f.SetCellValue(SheetClass, "J2", t.SheetClass.UriHash)
+	f.SetCellValue(SheetClass, "K2", t.SheetClass.Data)
 
 	// Create a token sheet.
 	_, err = f.NewSheet(SheetToken)
@@ -136,10 +132,10 @@ func GenerateToken(outputFile string, class Class, tokens []TokenInfo) error {
 	}
 	// Set active sheet of the workbook.
 	f.SetActiveSheet(index)
-	return f.SaveAs(outputFile)
+	return f.SaveAs(outputPath + "/tokens.xlsx")
 }
 
-func (InputTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
+func (BaseTemplate) ReadClass(xlsxFile *excelize.File) (Class, error) {
 	rows, err := xlsxFile.GetRows(SheetClass)
 	if err != nil {
 		return Class{}, err
@@ -178,7 +174,7 @@ func (InputTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
 	}, nil
 }
 
-func (InputTemplate) readTokenBaseInfo(xlsxFile *excelize.File) (infos []TokenBaseInfo, err error) {
+func (BaseTemplate) ReadTokenBaseInfo(xlsxFile *excelize.File) (infos []TokenBaseInfo, err error) {
 	rows, err := xlsxFile.GetRows(SheetTokenBaseInfo)
 	if err != nil {
 		return nil, err

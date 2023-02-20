@@ -1,4 +1,4 @@
-package nft
+package types
 
 import (
 	"github.com/xuri/excelize/v2"

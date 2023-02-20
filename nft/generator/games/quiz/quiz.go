@@ -1,13 +1,14 @@
-package nft
+package quiz
 
 import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/game-of-nfts/gon-toolbox/nft/types"
 	"github.com/xuri/excelize/v2"
 )
 
-type TokenDataQuiz struct {
+type TokenData struct {
 	Encryption    string `json:"encryption,omitempty"`
 	EncryptedFlow string `json:"encrypted_flow,class_id"`
 	LastRecipient string `json:"last_recipient,omitempty"`
@@ -15,19 +16,19 @@ type TokenDataQuiz struct {
 	Question      string `json:"question,omitempty"`
 }
 
-type InputTemplateQuiz struct {
-	InputTemplate
-	TokenData []TokenDataQuiz
+type Template struct {
+	types.BaseTemplate
+	TokenData []TokenData
 }
 
-func (t InputTemplateQuiz) Generate(outputFile string) error {
-	tokens := make([]TokenInfo, 0, len(t.TokenData))
+func (t Template) Generate() error {
+	tokens := make([]types.TokenInfo, 0, len(t.TokenData))
 	for i, data := range t.TokenData {
 		bz, err := json.Marshal(data)
 		if err != nil {
 			return err
 		}
-		tokens = append(tokens, TokenInfo{
+		tokens = append(tokens, types.TokenInfo{
 			ID:        t.TokenBaseInfo[i].ID,
 			ClassID:   t.TokenBaseInfo[i].ClassID,
 			Name:      t.TokenBaseInfo[i].Name,
@@ -38,14 +39,14 @@ func (t InputTemplateQuiz) Generate(outputFile string) error {
 			Data:      string(bz),
 		})
 	}
-	return GenerateToken(outputFile, t.SheetClass, tokens)
+	return t.GenerateToken(t.Args.OutputPath, tokens)
 }
 
-func (t InputTemplateQuiz) FromXLSX(file string) (Template, error) {
-	f, err := excelize.OpenFile(file)
+func (t Template) ReadFromXLSX(args types.InputArgs) (types.Template, error) {
+	f, err := excelize.OpenFile(args.TokenFile)
 	if err != nil {
 		fmt.Println(err)
-		return InputTemplateQuiz{}, err
+		return Template{}, err
 	}
 
 	defer func() {
@@ -55,26 +56,26 @@ func (t InputTemplateQuiz) FromXLSX(file string) (Template, error) {
 		}
 	}()
 
-	class, err := t.readClass(f)
+	class, err := t.ReadClass(f)
 	if err != nil {
 		fmt.Println(err)
-		return InputTemplateQuiz{}, err
+		return Template{}, err
 	}
 
-	tokenBaseInfo, err := t.readTokenBaseInfo(f)
+	tokenBaseInfo, err := t.ReadTokenBaseInfo(f)
 	if err != nil {
 		fmt.Println(err)
-		return InputTemplateQuiz{}, err
+		return Template{}, err
 	}
 
 	tokenData, err := t.readTokenData(f)
 	if err != nil {
 		fmt.Println(err)
-		return InputTemplateQuiz{}, err
+		return Template{}, err
 	}
 
-	return InputTemplateQuiz{
-		InputTemplate: InputTemplate{
+	return Template{
+		BaseTemplate: types.BaseTemplate{
 			SheetClass:    class,
 			TokenBaseInfo: tokenBaseInfo,
 		},
@@ -82,8 +83,8 @@ func (t InputTemplateQuiz) FromXLSX(file string) (Template, error) {
 	}, nil
 }
 
-func (InputTemplateQuiz) readTokenData(xlsxFile *excelize.File) (infos []TokenDataQuiz, err error) {
-	rows, err := xlsxFile.GetRows(SheetTokenData)
+func (Template) readTokenData(xlsxFile *excelize.File) (infos []TokenData, err error) {
+	rows, err := xlsxFile.GetRows(types.SheetTokenData)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,7 @@ func (InputTemplateQuiz) readTokenData(xlsxFile *excelize.File) (infos []TokenDa
 
 	for _, dataRow := range dataRows {
 		fmt.Println("data", dataRow)
-		infos = append(infos, TokenDataQuiz{
+		infos = append(infos, TokenData{
 			Encryption:    dataRow[0],
 			EncryptedFlow: dataRow[1],
 			LastRecipient: dataRow[2],
