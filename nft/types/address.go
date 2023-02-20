@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 
@@ -16,11 +15,20 @@ const (
 	ChainIDflixnet  = "gon-flixnet-1"
 )
 
-type AddressSelector struct {
-	m map[string][]string
+type TeamInfo struct {
+	TeamName        string `json:"team_name"`
+	IRISAddress     string `json:"iris_address"`
+	StargazeAddress string `json:"stargaze_address"`
+	JunoAddress     string `json:"juno_address"`
+	UptickAddress   string `json:"uptick_address"`
+	OmniflixAddress string `json:"omniflix_address"`
 }
 
-func NewAddressSelector(args InputArgs) (*AddressSelector, error) {
+type TeamSelector struct {
+	teams []TeamInfo
+}
+
+func NewTeamSelector(args InputArgs) (*TeamSelector, error) {
 	f, err := excelize.OpenFile(args.AddressFile)
 	if err != nil {
 		return nil, err
@@ -33,50 +41,59 @@ func NewAddressSelector(args InputArgs) (*AddressSelector, error) {
 		}
 	}()
 
-	as := &AddressSelector{
-		m: map[string][]string{
-			ChainIDiris:     make([]string, 0, 0),
-			ChainIDstargaze: make([]string, 0, 0),
-			ChainIDjuno:     make([]string, 0, 0),
-			ChainIDuptick:   make([]string, 0, 0),
-			ChainIDflixnet:  make([]string, 0, 0),
-		},
+	as := &TeamSelector{
+		teams: make([]TeamInfo, 0, 0),
 	}
 
-	//gon-irishub-1
-	as.fill(ChainIDiris, f)
-	//elgafar-1
-	as.fill(ChainIDstargaze, f)
-	//uni-6
-	as.fill(ChainIDjuno, f)
-	//uptick_7001_1
-	as.fill(ChainIDuptick, f)
-	//gon-flixnet-1
-	as.fill(ChainIDflixnet, f)
+	rows, err := f.GetRows(ChainIDiris)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, row := range rows[1:] {
+		as.teams = append(as.teams, TeamInfo{
+			TeamName:        row[0],
+			IRISAddress:     row[1],
+			StargazeAddress: row[2],
+			JunoAddress:     row[3],
+			UptickAddress:   row[4],
+			OmniflixAddress: row[5],
+		})
+	}
 	return as, nil
 }
 
-func (as *AddressSelector) fill(chainID string, xlsxFile *excelize.File) error {
-	rows, err := xlsxFile.GetRows(ChainIDiris)
-	if err != nil {
-		return err
+func (as *TeamSelector) PopOneAddress() string {
+	if len(as.teams) == 0 {
+		panic("no available address")
 	}
-	for _, row := range rows[1:] {
-		as.m[chainID] = append(as.m[chainID], row[0])
-	}
-	return nil
+	selectIdx := rand.Intn(len(as.teams))
+	address := as.teams[selectIdx].IRISAddress
+
+	as.teams = append(
+		as.teams[0:selectIdx],
+		as.teams[selectIdx:]...,
+	)
+	return address
 }
 
-func (as *AddressSelector) Pop(chainID string) (string, error) {
-	if len(as.m[chainID]) == 0 {
-		return "", errors.New("no available address")
+func (as *TeamSelector) PopNTeams(n int) (teams []TeamInfo) {
+	if len(as.teams)%n != 0 {
+		panic("no available address")
 	}
-	selectIdx := rand.Intn(len(as.m[chainID]))
-	address := as.m[chainID][selectIdx]
 
-	as.m[chainID] = append(
-		as.m[chainID][0:selectIdx],
-		as.m[chainID][selectIdx:]...,
-	)
-	return address, nil
+	for i := 0; i < n; i++ {
+		selectIdx := rand.Intn(len(as.teams))
+		teams = append(teams, as.teams[selectIdx])
+
+		as.teams = append(
+			as.teams[0:selectIdx],
+			as.teams[selectIdx:]...,
+		)
+	}
+	return
+}
+
+func (as *TeamSelector) AllTeams() []TeamInfo {
+	return as.teams
 }

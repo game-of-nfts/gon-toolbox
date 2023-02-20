@@ -48,7 +48,7 @@ func (t Template) Generate() error {
 			Name:      t.TokenBaseInfo[i].Name,
 			URI:       t.TokenBaseInfo[i].URI,
 			Sender:    t.Args.Sender,
-			Recipient: t.RandAddress(types.ChainIDiris),
+			Recipient: t.PopOneAddress(),
 			UriHash:   t.TokenBaseInfo[i].UriHash,
 			Data:      string(bz),
 		})

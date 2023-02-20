@@ -57,11 +57,10 @@ type Template interface {
 }
 
 type BaseTemplate struct {
+	*TeamSelector
 	SheetClass    Class
 	TokenBaseInfo []TokenBaseInfo
 	Args          InputArgs
-
-	selector *AddressSelector
 }
 
 func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
@@ -106,11 +105,11 @@ func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
 		return tpl, nil, errors.New("the lenght of token_base_info and token_data is unmatched")
 	}
 
-	selector, err := NewAddressSelector(args)
+	selector, err := NewTeamSelector(args)
 	if err != nil {
 		return tpl, nil, err
 	}
-	tpl.selector = selector
+	tpl.TeamSelector = selector
 
 	return tpl, dataRow, nil
 }
@@ -184,14 +183,6 @@ func (t BaseTemplate) GenerateToken(tokens []TokenInfo) error {
 	// Set active sheet of the workbook.
 	f.SetActiveSheet(index)
 	return f.SaveAs(t.Args.OutputPath + "/tokens.xlsx")
-}
-
-func (t BaseTemplate) RandAddress(chainID string) string {
-	address, err := t.selector.Pop(chainID)
-	if err != nil {
-		panic(err)
-	}
-	return address
 }
 
 func (btl BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {

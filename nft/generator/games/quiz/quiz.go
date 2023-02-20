@@ -15,7 +15,7 @@ type TokenData struct {
 	Flow               string `json:"flow,omitempty"`
 }
 
-type TokenDataXlsx struct {
+type TokenDataXLSx struct {
 	Question string `json:"question,omitempty"`
 	Answer   string `json:"answer,omitempty"`
 	Flow     string `json:"flow,omitempty"`
@@ -23,7 +23,7 @@ type TokenDataXlsx struct {
 
 type Template struct {
 	types.BaseTemplate
-	TokenData []TokenDataXlsx
+	TokenData []TokenDataXLSx
 }
 
 func NewTemplate(args types.InputArgs) (types.Template, error) {
@@ -34,7 +34,7 @@ func NewTemplate(args types.InputArgs) (types.Template, error) {
 
 	tpl := &Template{
 		BaseTemplate: baseTpl,
-		TokenData:    make([]TokenDataXlsx, 0, len(baseTpl.TokenBaseInfo)),
+		TokenData:    make([]TokenDataXLSx, 0, len(baseTpl.TokenBaseInfo)),
 	}
 	if err = tpl.FillTokenData(tokenDataRows); err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (t Template) Generate() error {
 
 func (t *Template) FillTokenData(dataRows [][]string) error {
 	for _, dataRow := range dataRows {
-		t.TokenData = append(t.TokenData, TokenDataXlsx{
+		t.TokenData = append(t.TokenData, TokenDataXLSx{
 			Question: dataRow[0],
 			Answer:   dataRow[1],
 			Flow:     dataRow[2],
