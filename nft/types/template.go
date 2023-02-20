@@ -22,7 +22,7 @@ type Class struct {
 	ID               string `json:"id,omitempty"`
 	Name             string `json:"name,omitempty"`
 	Schema           string `json:"schema,omitempty"`
-	Creator          string `json:"creator,omitempty"`
+	Sender           string `json:"sender,omitempty"`
 	Symbol           string `json:"symbol,omitempty"`
 	MintRestricted   bool   `json:"mint_restricted,omitempty"`
 	UpdateRestricted bool   `json:"update_restricted,omitempty"`
@@ -33,13 +33,11 @@ type Class struct {
 }
 
 type TokenBaseInfo struct {
-	ID        string `json:"id"`
-	ClassID   string `json:"class_id"`
-	Name      string `json:"name,omitempty"`
-	URI       string `json:"uri,omitempty"`
-	Sender    string `json:"sender,omitempty"`
-	Recipient string `json:"recipient,omitempty"`
-	UriHash   string `json:"uri_hash,omitempty"`
+	ID      string `json:"id"`
+	ClassID string `json:"class_id"`
+	Name    string `json:"name,omitempty"`
+	URI     string `json:"uri,omitempty"`
+	UriHash string `json:"uri_hash,omitempty"`
 }
 
 type TokenInfo struct {
@@ -62,6 +60,8 @@ type BaseTemplate struct {
 	SheetClass    Class
 	TokenBaseInfo []TokenBaseInfo
 	Args          InputArgs
+
+	selector *AddressSelector
 }
 
 func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
@@ -105,6 +105,13 @@ func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
 	if len(tokenBaseInfo) != len(dataRow) {
 		return tpl, nil, errors.New("the lenght of token_base_info and token_data is unmatched")
 	}
+
+	selector, err := NewAddressSelector(args)
+	if err != nil {
+		return tpl, nil, err
+	}
+	tpl.selector = selector
+
 	return tpl, dataRow, nil
 }
 
@@ -139,7 +146,7 @@ func (t BaseTemplate) GenerateToken(tokens []TokenInfo) error {
 	f.SetCellValue(SheetClass, "A2", t.SheetClass.ID)
 	f.SetCellValue(SheetClass, "B2", t.SheetClass.Name)
 	f.SetCellValue(SheetClass, "C2", t.SheetClass.Schema)
-	f.SetCellValue(SheetClass, "D2", t.SheetClass.Creator)
+	f.SetCellValue(SheetClass, "D2", t.SheetClass.Sender)
 	f.SetCellValue(SheetClass, "E2", t.SheetClass.Symbol)
 	f.SetCellValue(SheetClass, "F2", t.SheetClass.MintRestricted)
 	f.SetCellValue(SheetClass, "G2", t.SheetClass.UpdateRestricted)
@@ -179,7 +186,15 @@ func (t BaseTemplate) GenerateToken(tokens []TokenInfo) error {
 	return f.SaveAs(t.Args.OutputPath + "/tokens.xlsx")
 }
 
-func (BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
+func (t BaseTemplate) RandAddress(chainID string) string {
+	address, err := t.selector.Pop(chainID)
+	if err != nil {
+		panic(err)
+	}
+	return address
+}
+
+func (btl BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
 	rows, err := xlsxFile.GetRows(SheetClass)
 	if err != nil {
 		return Class{}, err
@@ -194,12 +209,12 @@ func (BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
 
 	fmt.Println("header", headerRow)
 
-	mintRestricted, err := strconv.ParseBool(dataRow[5])
+	mintRestricted, err := strconv.ParseBool(dataRow[4])
 	if err != nil {
 		return Class{}, err
 	}
 
-	updateRestricted, err := strconv.ParseBool(dataRow[6])
+	updateRestricted, err := strconv.ParseBool(dataRow[5])
 	if err != nil {
 		return Class{}, err
 	}
@@ -207,14 +222,14 @@ func (BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
 		ID:               dataRow[0],
 		Name:             dataRow[1],
 		Schema:           dataRow[2],
-		Creator:          dataRow[3],
-		Symbol:           dataRow[4],
+		Sender:           btl.Args.Sender,
+		Symbol:           dataRow[3],
 		MintRestricted:   mintRestricted,
 		UpdateRestricted: updateRestricted,
-		Description:      dataRow[7],
-		Uri:              dataRow[8],
-		UriHash:          dataRow[9],
-		Data:             dataRow[10],
+		Description:      dataRow[6],
+		Uri:              dataRow[7],
+		UriHash:          dataRow[8],
+		Data:             dataRow[9],
 	}, nil
 }
 
@@ -231,13 +246,11 @@ func (BaseTemplate) readTokenBaseInfo(xlsxFile *excelize.File) (infos []TokenBas
 
 	for _, dataRow := range dataRows {
 		infos = append(infos, TokenBaseInfo{
-			ID:        dataRow[0],
-			ClassID:   dataRow[1],
-			Name:      dataRow[2],
-			URI:       dataRow[3],
-			Sender:    dataRow[4],
-			Recipient: dataRow[5],
-			UriHash:   dataRow[6],
+			ID:      dataRow[0],
+			ClassID: dataRow[1],
+			Name:    dataRow[2],
+			URI:     dataRow[3],
+			UriHash: dataRow[4],
 		})
 	}
 	return

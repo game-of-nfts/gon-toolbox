@@ -9,6 +9,7 @@ const (
 	FlagTokenFile   = "token-file"
 	FlagAddressFile = "address-file"
 	FlagOutputPath  = "output-path"
+	FlagTxSender    = "sender"
 )
 
 // common flagsets to add to various functions
@@ -26,6 +27,7 @@ type InputArgs struct {
 	TokenFile   string
 	AddressFile string
 	OutputPath  string
+	Sender      string
 }
 
 func ReadArgs(cmd *cobra.Command) (InputArgs, error) {
@@ -44,10 +46,16 @@ func ReadArgs(cmd *cobra.Command) (InputArgs, error) {
 		return InputArgs{}, err
 	}
 
+	sender, err := cmd.Flags().GetString(FlagTxSender)
+	if err != nil {
+		return InputArgs{}, err
+	}
+
 	return InputArgs{
 		TokenFile:   tokenFile,
 		AddressFile: addressFile,
 		OutputPath:  outputPath,
+		Sender:      sender,
 	}, nil
 
 }
