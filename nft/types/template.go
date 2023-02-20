@@ -57,7 +57,7 @@ type Template interface {
 }
 
 type BaseTemplate struct {
-	*TeamSelector
+	*UserSelector
 	SheetClass    Class
 	TokenBaseInfo []TokenBaseInfo
 	Args          InputArgs
@@ -109,7 +109,7 @@ func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
 	if err != nil {
 		return tpl, nil, err
 	}
-	tpl.TeamSelector = selector
+	tpl.UserSelector = selector
 
 	return tpl, dataRow, nil
 }

@@ -85,23 +85,23 @@ func (t Template) buildTokenData(d Row) (string, string) {
 	return string(bz), teams[0].IRISAddress
 }
 
-func (t Template) parseFlow(flow string) (battons []string, teams []types.UserInfo) {
+func (t Template) parseFlow(flow string) (battons []string, users []types.UserInfo) {
 	paths := strings.Split(flow, splitOne)
-	teams = t.PopTeams(len(paths))
+	users = t.PopNUsers(len(paths))
 
 	for i, path := range paths {
 		network := strings.Split(path, splitTwo)
 		switch strings.TrimSpace(network[0]) {
 		// case "i":
-		// 	battons = append(battons, teams[i].IRISAddress)
+		// 	battons = append(battons, users[i].IRISAddress)
 		case "s":
-			battons = append(battons, teams[i].StargazeAddress)
+			battons = append(battons, users[i].StargazeAddress)
 		case "j":
-			battons = append(battons, teams[i].JunoAddress)
+			battons = append(battons, users[i].JunoAddress)
 		case "u":
-			battons = append(battons, teams[i].UptickAddress)
+			battons = append(battons, users[i].UptickAddress)
 		case "o":
-			battons = append(battons, teams[i].UptickAddress)
+			battons = append(battons, users[i].UptickAddress)
 		}
 	}
 	return

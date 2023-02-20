@@ -24,11 +24,11 @@ type UserInfo struct {
 	OmniflixAddress string `json:"omniflix_address"`
 }
 
-type TeamSelector struct {
+type UserSelector struct {
 	users []UserInfo
 }
 
-func NewTeamSelector(args InputArgs) (*TeamSelector, error) {
+func NewTeamSelector(args InputArgs) (*UserSelector, error) {
 	f, err := excelize.OpenFile(args.AddressFile)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func NewTeamSelector(args InputArgs) (*TeamSelector, error) {
 		}
 	}()
 
-	as := &TeamSelector{
+	as := &UserSelector{
 		users: make([]UserInfo, 0, 0),
 	}
 
@@ -63,7 +63,7 @@ func NewTeamSelector(args InputArgs) (*TeamSelector, error) {
 	return as, nil
 }
 
-func (as *TeamSelector) PopAddress() string {
+func (as *UserSelector) PopAddress() string {
 	if len(as.users) == 0 {
 		panic("no available address")
 	}
@@ -77,14 +77,14 @@ func (as *TeamSelector) PopAddress() string {
 	return address
 }
 
-func (as *TeamSelector) PopTeams(n int) (teams []UserInfo) {
+func (as *UserSelector) PopNUsers(n int) (users []UserInfo) {
 	if len(as.users)%n != 0 {
 		panic("no available address")
 	}
 
 	for i := 0; i < n; i++ {
 		selectIdx := rand.Intn(len(as.users))
-		teams = append(teams, as.users[selectIdx])
+		users = append(users, as.users[selectIdx])
 
 		as.users = append(
 			as.users[0:selectIdx],
