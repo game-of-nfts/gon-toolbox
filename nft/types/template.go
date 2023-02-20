@@ -81,13 +81,13 @@ func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
 		}
 	}()
 
-	class, err := tpl.ReadClass(f)
+	class, err := tpl.readClass(f)
 	if err != nil {
 		return tpl, nil, err
 	}
 	tpl.SheetClass = class
 
-	tokenBaseInfo, err := tpl.ReadTokenBaseInfo(f)
+	tokenBaseInfo, err := tpl.readTokenBaseInfo(f)
 	if err != nil {
 		return tpl, nil, err
 	}
@@ -100,7 +100,12 @@ func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
 
 	headerRow := rows[0]
 	fmt.Println("header", headerRow)
-	return tpl, rows[1:], nil
+
+	dataRow := rows[1:]
+	if len(tokenBaseInfo) != len(dataRow) {
+		return tpl, nil, errors.New("the lenght of token_base_info and token_data is unmatched")
+	}
+	return tpl, dataRow, nil
 }
 
 func (t BaseTemplate) GenerateToken(tokens []TokenInfo) error {
@@ -162,9 +167,9 @@ func (t BaseTemplate) GenerateToken(tokens []TokenInfo) error {
 	for i, token := range tokens {
 		f.SetCellValue(SheetToken, fmt.Sprintf("A%d", i+2), token.ID)
 		f.SetCellValue(SheetToken, fmt.Sprintf("B%d", i+2), token.ClassID)
-		f.SetCellValue(SheetToken, fmt.Sprintf("C%d", i+2), token.URI)
-		f.SetCellValue(SheetToken, fmt.Sprintf("D%d", i+2), token.Sender)
-		f.SetCellValue(SheetToken, fmt.Sprintf("E%d", i+2), token.Recipient)
+		f.SetCellValue(SheetToken, fmt.Sprintf("C%d", i+2), token.Name)
+		f.SetCellValue(SheetToken, fmt.Sprintf("D%d", i+2), token.URI)
+		f.SetCellValue(SheetToken, fmt.Sprintf("E%d", i+2), token.Sender)
 		f.SetCellValue(SheetToken, fmt.Sprintf("F%d", i+2), token.Recipient)
 		f.SetCellValue(SheetToken, fmt.Sprintf("G%d", i+2), token.UriHash)
 		f.SetCellValue(SheetToken, fmt.Sprintf("H%d", i+2), token.Data)
@@ -174,7 +179,7 @@ func (t BaseTemplate) GenerateToken(tokens []TokenInfo) error {
 	return f.SaveAs(t.Args.OutputPath + "/tokens.xlsx")
 }
 
-func (BaseTemplate) ReadClass(xlsxFile *excelize.File) (Class, error) {
+func (BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
 	rows, err := xlsxFile.GetRows(SheetClass)
 	if err != nil {
 		return Class{}, err
@@ -213,7 +218,7 @@ func (BaseTemplate) ReadClass(xlsxFile *excelize.File) (Class, error) {
 	}, nil
 }
 
-func (BaseTemplate) ReadTokenBaseInfo(xlsxFile *excelize.File) (infos []TokenBaseInfo, err error) {
+func (BaseTemplate) readTokenBaseInfo(xlsxFile *excelize.File) (infos []TokenBaseInfo, err error) {
 	rows, err := xlsxFile.GetRows(SheetTokenBaseInfo)
 	if err != nil {
 		return nil, err
