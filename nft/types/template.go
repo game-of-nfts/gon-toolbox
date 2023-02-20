@@ -53,18 +53,57 @@ type TokenInfo struct {
 	Data      string `json:"data,omitempty"`
 }
 
+type Template interface {
+	Generate() error
+	FillTokenData(dataRows [][]string) error
+}
+
 type BaseTemplate struct {
 	SheetClass    Class
 	TokenBaseInfo []TokenBaseInfo
 	Args          InputArgs
 }
 
-type Template interface {
-	ReadFromXLSX(args InputArgs) (Template, error)
-	Generate() error
+func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
+	tpl := BaseTemplate{
+		Args: args,
+	}
+
+	f, err := excelize.OpenFile(args.TokenFile)
+	if err != nil {
+		return tpl, nil, err
+	}
+
+	defer func() {
+		// Close the spreadsheet.
+		if err := f.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+
+	class, err := tpl.ReadClass(f)
+	if err != nil {
+		return tpl, nil, err
+	}
+	tpl.SheetClass = class
+
+	tokenBaseInfo, err := tpl.ReadTokenBaseInfo(f)
+	if err != nil {
+		return tpl, nil, err
+	}
+	tpl.TokenBaseInfo = tokenBaseInfo
+
+	rows, err := f.GetRows(SheetTokenData)
+	if err != nil {
+		return tpl, nil, err
+	}
+
+	headerRow := rows[0]
+	fmt.Println("header", headerRow)
+	return tpl, rows[1:], nil
 }
 
-func (t BaseTemplate) GenerateToken(outputPath string, tokens []TokenInfo) error {
+func (t BaseTemplate) GenerateToken(tokens []TokenInfo) error {
 	f := excelize.NewFile()
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -132,7 +171,7 @@ func (t BaseTemplate) GenerateToken(outputPath string, tokens []TokenInfo) error
 	}
 	// Set active sheet of the workbook.
 	f.SetActiveSheet(index)
-	return f.SaveAs(outputPath + "/tokens.xlsx")
+	return f.SaveAs(t.Args.OutputPath + "/tokens.xlsx")
 }
 
 func (BaseTemplate) ReadClass(xlsxFile *excelize.File) (Class, error) {

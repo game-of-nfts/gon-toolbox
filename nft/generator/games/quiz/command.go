@@ -15,11 +15,11 @@ func Commands() *cobra.Command {
 				return err
 			}
 
-			template, err := Template{}.ReadFromXLSX(myArgs)
+			tpl, err := NewTemplate(myArgs)
 			if err != nil {
 				return err
 			}
-			return template.Generate()
+			return tpl.Generate()
 		},
 	}
 

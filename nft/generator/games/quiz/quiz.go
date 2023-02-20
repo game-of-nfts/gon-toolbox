@@ -2,10 +2,8 @@ package quiz
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/game-of-nfts/gon-toolbox/nft/types"
-	"github.com/xuri/excelize/v2"
 )
 
 type TokenData struct {
@@ -19,6 +17,22 @@ type TokenData struct {
 type Template struct {
 	types.BaseTemplate
 	TokenData []TokenData
+}
+
+func NewTemplate(args types.InputArgs) (types.Template, error) {
+	baseTpl, tokenDataRows, err := types.NewTemplate(args)
+	if err != nil {
+		return nil, err
+	}
+
+	tpl := &Template{
+		BaseTemplate: baseTpl,
+		TokenData:    make([]TokenData, 0, len(baseTpl.TokenBaseInfo)),
+	}
+	if err = tpl.FillTokenData(tokenDataRows); err != nil {
+		return nil, err
+	}
+	return tpl, nil
 }
 
 func (t Template) Generate() error {
@@ -39,64 +53,12 @@ func (t Template) Generate() error {
 			Data:      string(bz),
 		})
 	}
-	return t.GenerateToken(t.Args.OutputPath, tokens)
+	return t.GenerateToken(tokens)
 }
 
-func (t Template) ReadFromXLSX(args types.InputArgs) (types.Template, error) {
-	f, err := excelize.OpenFile(args.TokenFile)
-	if err != nil {
-		fmt.Println(err)
-		return Template{}, err
-	}
-
-	defer func() {
-		// Close the spreadsheet.
-		if err := f.Close(); err != nil {
-			fmt.Println(err)
-		}
-	}()
-
-	class, err := t.ReadClass(f)
-	if err != nil {
-		fmt.Println(err)
-		return Template{}, err
-	}
-
-	tokenBaseInfo, err := t.ReadTokenBaseInfo(f)
-	if err != nil {
-		fmt.Println(err)
-		return Template{}, err
-	}
-
-	tokenData, err := t.readTokenData(f)
-	if err != nil {
-		fmt.Println(err)
-		return Template{}, err
-	}
-
-	return Template{
-		BaseTemplate: types.BaseTemplate{
-			SheetClass:    class,
-			TokenBaseInfo: tokenBaseInfo,
-		},
-		TokenData: tokenData,
-	}, nil
-}
-
-func (Template) readTokenData(xlsxFile *excelize.File) (infos []TokenData, err error) {
-	rows, err := xlsxFile.GetRows(types.SheetTokenData)
-	if err != nil {
-		return nil, err
-	}
-
-	headerRow := rows[0]
-	fmt.Println("header", headerRow)
-
-	dataRows := rows[1:]
-
+func (t *Template) FillTokenData(dataRows [][]string) error {
 	for _, dataRow := range dataRows {
-		fmt.Println("data", dataRow)
-		infos = append(infos, TokenData{
+		t.TokenData = append(t.TokenData, TokenData{
 			Encryption:    dataRow[0],
 			EncryptedFlow: dataRow[1],
 			LastRecipient: dataRow[2],
@@ -104,5 +66,5 @@ func (Template) readTokenData(xlsxFile *excelize.File) (infos []TokenData, err e
 			Question:      dataRow[4],
 		})
 	}
-	return
+	return nil
 }
