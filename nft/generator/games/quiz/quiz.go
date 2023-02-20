@@ -15,7 +15,7 @@ type TokenData struct {
 	Flow               string `json:"flow,omitempty"`
 }
 
-type TokenDataXLSx struct {
+type Row struct {
 	Question string `json:"question,omitempty"`
 	Answer   string `json:"answer,omitempty"`
 	Flow     string `json:"flow,omitempty"`
@@ -23,7 +23,7 @@ type TokenDataXLSx struct {
 
 type Template struct {
 	types.BaseTemplate
-	TokenData []TokenDataXLSx
+	Rows []Row
 }
 
 func NewTemplate(args types.InputArgs) (types.Template, error) {
@@ -34,17 +34,17 @@ func NewTemplate(args types.InputArgs) (types.Template, error) {
 
 	tpl := &Template{
 		BaseTemplate: baseTpl,
-		TokenData:    make([]TokenDataXLSx, 0, len(baseTpl.TokenBaseInfo)),
+		Rows:         make([]Row, 0, len(baseTpl.TokenBaseInfo)),
 	}
-	if err = tpl.FillTokenData(tokenDataRows); err != nil {
+	if err = tpl.FillRows(tokenDataRows); err != nil {
 		return nil, err
 	}
 	return tpl, nil
 }
 
 func (t Template) Generate() error {
-	tokens := make([]types.TokenInfo, 0, len(t.TokenData))
-	for i, data := range t.TokenData {
+	tokens := make([]types.TokenInfo, 0, len(t.Rows))
+	for i, data := range t.Rows {
 		keyManager, err := crypto.NewAlgoKeyManager("secp256k1")
 		if err != nil {
 			return err
@@ -82,9 +82,9 @@ func (t Template) Generate() error {
 	return t.GenerateToken(tokens)
 }
 
-func (t *Template) FillTokenData(dataRows [][]string) error {
+func (t *Template) FillRows(dataRows [][]string) error {
 	for _, dataRow := range dataRows {
-		t.TokenData = append(t.TokenData, TokenDataXLSx{
+		t.Rows = append(t.Rows, Row{
 			Question: dataRow[0],
 			Answer:   dataRow[1],
 			Flow:     dataRow[2],

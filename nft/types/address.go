@@ -15,7 +15,7 @@ const (
 	ChainIDflixnet  = "gon-flixnet-1"
 )
 
-type TeamInfo struct {
+type UserInfo struct {
 	TeamName        string `json:"team_name"`
 	IRISAddress     string `json:"iris_address"`
 	StargazeAddress string `json:"stargaze_address"`
@@ -25,7 +25,7 @@ type TeamInfo struct {
 }
 
 type TeamSelector struct {
-	teams []TeamInfo
+	users []UserInfo
 }
 
 func NewTeamSelector(args InputArgs) (*TeamSelector, error) {
@@ -42,7 +42,7 @@ func NewTeamSelector(args InputArgs) (*TeamSelector, error) {
 	}()
 
 	as := &TeamSelector{
-		teams: make([]TeamInfo, 0, 0),
+		users: make([]UserInfo, 0, 0),
 	}
 
 	rows, err := f.GetRows(ChainIDiris)
@@ -51,7 +51,7 @@ func NewTeamSelector(args InputArgs) (*TeamSelector, error) {
 	}
 
 	for _, row := range rows[1:] {
-		as.teams = append(as.teams, TeamInfo{
+		as.users = append(as.users, UserInfo{
 			TeamName:        row[0],
 			IRISAddress:     row[1],
 			StargazeAddress: row[2],
@@ -63,37 +63,33 @@ func NewTeamSelector(args InputArgs) (*TeamSelector, error) {
 	return as, nil
 }
 
-func (as *TeamSelector) PopOneAddress() string {
-	if len(as.teams) == 0 {
+func (as *TeamSelector) PopAddress() string {
+	if len(as.users) == 0 {
 		panic("no available address")
 	}
-	selectIdx := rand.Intn(len(as.teams))
-	address := as.teams[selectIdx].IRISAddress
+	selectIdx := rand.Intn(len(as.users))
+	address := as.users[selectIdx].IRISAddress
 
-	as.teams = append(
-		as.teams[0:selectIdx],
-		as.teams[selectIdx:]...,
+	as.users = append(
+		as.users[0:selectIdx],
+		as.users[selectIdx:]...,
 	)
 	return address
 }
 
-func (as *TeamSelector) PopNTeams(n int) (teams []TeamInfo) {
-	if len(as.teams)%n != 0 {
+func (as *TeamSelector) PopTeams(n int) (teams []UserInfo) {
+	if len(as.users)%n != 0 {
 		panic("no available address")
 	}
 
 	for i := 0; i < n; i++ {
-		selectIdx := rand.Intn(len(as.teams))
-		teams = append(teams, as.teams[selectIdx])
+		selectIdx := rand.Intn(len(as.users))
+		teams = append(teams, as.users[selectIdx])
 
-		as.teams = append(
-			as.teams[0:selectIdx],
-			as.teams[selectIdx:]...,
+		as.users = append(
+			as.users[0:selectIdx],
+			as.users[selectIdx:]...,
 		)
 	}
 	return
-}
-
-func (as *TeamSelector) AllTeams() []TeamInfo {
-	return as.teams
 }

@@ -53,7 +53,7 @@ type TokenInfo struct {
 
 type Template interface {
 	Generate() error
-	FillTokenData(dataRows [][]string) error
+	FillRows(dataRows [][]string) error
 }
 
 type BaseTemplate struct {

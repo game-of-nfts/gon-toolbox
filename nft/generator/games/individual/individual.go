@@ -29,7 +29,7 @@ func NewTemplate(args types.InputArgs) (types.Template, error) {
 		TokenData:    make([]TokenData, 0, len(baseTpl.TokenBaseInfo)),
 	}
 
-	if err = tpl.FillTokenData(tokenDataRows); err != nil {
+	if err = tpl.FillRows(tokenDataRows); err != nil {
 		return nil, err
 	}
 	return tpl, nil
@@ -48,7 +48,7 @@ func (t Template) Generate() error {
 			Name:      t.TokenBaseInfo[i].Name,
 			URI:       t.TokenBaseInfo[i].URI,
 			Sender:    t.Args.Sender,
-			Recipient: t.PopOneAddress(),
+			Recipient: t.PopAddress(),
 			UriHash:   t.TokenBaseInfo[i].UriHash,
 			Data:      string(bz),
 		})
@@ -56,7 +56,7 @@ func (t Template) Generate() error {
 	return t.GenerateToken(tokens)
 }
 
-func (t *Template) FillTokenData(dataRows [][]string) error {
+func (t *Template) FillRows(dataRows [][]string) error {
 	for _, dataRow := range dataRows {
 		t.TokenData = append(t.TokenData, TokenData{
 			Type:        dataRow[0],

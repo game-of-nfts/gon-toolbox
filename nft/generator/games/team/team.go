@@ -21,7 +21,7 @@ type TokenData struct {
 	StartHeight   string   `json:"start_height,omitempty"`
 }
 
-type TokenDataXLSx struct {
+type Row struct {
 	Type          string `json:"type,omitempty"`
 	FlowID        string `json:"flow_id,class_id"`
 	Flow          string `json:"flow,class_id"`
@@ -31,7 +31,7 @@ type TokenDataXLSx struct {
 
 type Template struct {
 	types.BaseTemplate
-	TokenData []TokenDataXLSx
+	Rows []Row
 }
 
 func NewTemplate(args types.InputArgs) (types.Template, error) {
@@ -42,18 +42,18 @@ func NewTemplate(args types.InputArgs) (types.Template, error) {
 
 	tpl := &Template{
 		BaseTemplate: baseTpl,
-		TokenData:    make([]TokenDataXLSx, 0, len(baseTpl.TokenBaseInfo)),
+		Rows:         make([]Row, 0, len(baseTpl.TokenBaseInfo)),
 	}
 
-	if err = tpl.FillTokenData(tokenDataRows); err != nil {
+	if err = tpl.FillRows(tokenDataRows); err != nil {
 		return nil, err
 	}
 	return tpl, nil
 }
 
 func (t Template) Generate() error {
-	tokens := make([]types.TokenInfo, 0, len(t.TokenData))
-	for i, data := range t.TokenData {
+	tokens := make([]types.TokenInfo, 0, len(t.Rows))
+	for i, data := range t.Rows {
 		tokenData, recipient := t.buildTokenData(data)
 		tokens = append(tokens, types.TokenInfo{
 			ID:        t.TokenBaseInfo[i].ID,
@@ -69,7 +69,7 @@ func (t Template) Generate() error {
 	return t.GenerateToken(tokens)
 }
 
-func (t Template) buildTokenData(d TokenDataXLSx) (string, string) {
+func (t Template) buildTokenData(d Row) (string, string) {
 	battons, teams := t.parseFlow(d.Flow)
 	data := TokenData{
 		Type:          d.Type,
@@ -85,9 +85,9 @@ func (t Template) buildTokenData(d TokenDataXLSx) (string, string) {
 	return string(bz), teams[0].IRISAddress
 }
 
-func (t Template) parseFlow(flow string) (battons []string, teams []types.TeamInfo) {
+func (t Template) parseFlow(flow string) (battons []string, teams []types.UserInfo) {
 	paths := strings.Split(flow, splitOne)
-	teams = t.PopNTeams(len(paths))
+	teams = t.PopTeams(len(paths))
 
 	for i, path := range paths {
 		network := strings.Split(path, splitTwo)
@@ -107,9 +107,9 @@ func (t Template) parseFlow(flow string) (battons []string, teams []types.TeamIn
 	return
 }
 
-func (t *Template) FillTokenData(dataRows [][]string) error {
+func (t *Template) FillRows(dataRows [][]string) error {
 	for _, dataRow := range dataRows {
-		t.TokenData = append(t.TokenData, TokenDataXLSx{
+		t.Rows = append(t.Rows, Row{
 			Type:          dataRow[0],
 			FlowID:        dataRow[1],
 			Flow:          dataRow[2],
