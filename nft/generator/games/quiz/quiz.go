@@ -3,20 +3,27 @@ package quiz
 import (
 	"encoding/json"
 
+	"github.com/irisnet/core-sdk-go/common/crypto"
+	sdktypes "github.com/irisnet/core-sdk-go/types"
+
 	"github.com/game-of-nfts/gon-toolbox/nft/types"
 )
 
 type TokenData struct {
-	Encryption    string `json:"encryption,omitempty"`
-	EncryptedFlow string `json:"encrypted_flow,class_id"`
-	LastRecipient string `json:"last_recipient,omitempty"`
-	EscapeFlow    string `json:"escape_flow,omitempty"`
-	Question      string `json:"question,omitempty"`
+	Question           string `json:"question,omitempty"`
+	MnemonicsEncrypted string `json:"mnemonics_encrypted,omitempty"`
+	Flow               string `json:"flow,omitempty"`
+}
+
+type TokenDataXlsx struct {
+	Question string `json:"question,omitempty"`
+	Answer   string `json:"answer,omitempty"`
+	Flow     string `json:"flow,omitempty"`
 }
 
 type Template struct {
 	types.BaseTemplate
-	TokenData []TokenData
+	TokenData []TokenDataXlsx
 }
 
 func NewTemplate(args types.InputArgs) (types.Template, error) {
@@ -27,7 +34,7 @@ func NewTemplate(args types.InputArgs) (types.Template, error) {
 
 	tpl := &Template{
 		BaseTemplate: baseTpl,
-		TokenData:    make([]TokenData, 0, len(baseTpl.TokenBaseInfo)),
+		TokenData:    make([]TokenDataXlsx, 0, len(baseTpl.TokenBaseInfo)),
 	}
 	if err = tpl.FillTokenData(tokenDataRows); err != nil {
 		return nil, err
@@ -38,19 +45,36 @@ func NewTemplate(args types.InputArgs) (types.Template, error) {
 func (t Template) Generate() error {
 	tokens := make([]types.TokenInfo, 0, len(t.TokenData))
 	for i, data := range t.TokenData {
-		bz, err := json.Marshal(data)
+		keyManager, err := crypto.NewAlgoKeyManager("secp256k1")
+		if err != nil {
+			return err
+		}
+		mnemonics, _ := keyManager.Generate()
+		pubKey := keyManager.ExportPubKey()
+		address := sdktypes.AccAddress(pubKey.Address().Bytes()).String()
+
+		mnemonicsEncrypted, err := types.Encrypt(data.Answer, mnemonics)
 		if err != nil {
 			return err
 		}
 
-		//TODO Recipient should be regenerated
+		metadata := TokenData{
+			Question:           data.Question,
+			MnemonicsEncrypted: mnemonicsEncrypted,
+			Flow:               data.Flow,
+		}
+		bz, err := json.Marshal(metadata)
+		if err != nil {
+			return err
+		}
+
 		tokens = append(tokens, types.TokenInfo{
 			ID:        t.TokenBaseInfo[i].ID,
 			ClassID:   t.TokenBaseInfo[i].ClassID,
 			Name:      t.TokenBaseInfo[i].Name,
 			URI:       t.TokenBaseInfo[i].URI,
 			Sender:    t.Args.Sender,
-			Recipient: t.RandAddress(types.ChainIDiris),
+			Recipient: address,
 			UriHash:   t.TokenBaseInfo[i].UriHash,
 			Data:      string(bz),
 		})
@@ -60,12 +84,10 @@ func (t Template) Generate() error {
 
 func (t *Template) FillTokenData(dataRows [][]string) error {
 	for _, dataRow := range dataRows {
-		t.TokenData = append(t.TokenData, TokenData{
-			Encryption:    dataRow[0],
-			EncryptedFlow: dataRow[1],
-			LastRecipient: dataRow[2],
-			EscapeFlow:    dataRow[3],
-			Question:      dataRow[4],
+		t.TokenData = append(t.TokenData, TokenDataXlsx{
+			Question: dataRow[0],
+			Answer:   dataRow[1],
+			Flow:     dataRow[2],
 		})
 	}
 	return nil
