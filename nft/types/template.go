@@ -13,6 +13,7 @@ const (
 	SheetTokenBaseInfo = "token_base_info"
 	SheetTokenData     = "token_data"
 	SheetToken         = "token"
+	SheetTeams         = "teams"
 	TemplateIndividual = "individual"
 	TemplateQuiz       = "quiz"
 	TemplateTeam       = "team"

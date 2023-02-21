@@ -29,6 +29,10 @@ type UserSelector struct {
 }
 
 func NewTeamSelector(args InputArgs) (*UserSelector, error) {
+	if len(args.AddressFile) == 0 {
+		return nil, nil
+	}
+
 	f, err := excelize.OpenFile(args.AddressFile)
 	if err != nil {
 		return nil, err
@@ -45,7 +49,7 @@ func NewTeamSelector(args InputArgs) (*UserSelector, error) {
 		users: make([]UserInfo, 0, 0),
 	}
 
-	rows, err := f.GetRows(ChainIDiris)
+	rows, err := f.GetRows(SheetTeams)
 	if err != nil {
 		return nil, err
 	}

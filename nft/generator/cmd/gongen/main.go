@@ -13,7 +13,7 @@ import (
 
 func main() {
 	rootCmd := &cobra.Command{
-		Use:   "generator",
+		Use:   "gongen",
 		Short: "GoN testnet nft generator",
 	}
 
@@ -26,8 +26,8 @@ func main() {
 	pflags := rootCmd.PersistentFlags()
 	pflags.AddFlagSet(types.ConfigSet)
 	_ = rootCmd.MarkFlagRequired(types.FlagTokenFile)
-	_ = rootCmd.MarkFlagRequired(types.FlagAddressFile)
 	_ = rootCmd.MarkFlagRequired(types.FlagOutputPath)
+	_ = rootCmd.MarkFlagRequired(types.FlagTxSender)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

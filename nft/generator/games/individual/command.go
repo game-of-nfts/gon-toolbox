@@ -9,7 +9,7 @@ import (
 func Commands() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "individual",
-		Short: "xxxx",
+		Short: "Generate nft of individual game type",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			myArgs, err := types.ReadArgs(cmd)
 			if err != nil {
@@ -23,5 +23,6 @@ func Commands() *cobra.Command {
 			return tpl.Generate()
 		},
 	}
+	_ = cmd.MarkFlagRequired(types.FlagUserFile)
 	return cmd
 }
