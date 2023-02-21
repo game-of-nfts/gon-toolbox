@@ -10,6 +10,7 @@ const (
 	FlagUserFile   = "user-file"
 	FlagOutputPath = "output-path"
 	FlagTxSender   = "sender"
+  FlagChainConfig = "config-file"
 )
 
 // common flagsets to add to various functions
@@ -22,6 +23,7 @@ func init() {
 	ConfigSet.String(FlagUserFile, "", "User information file")
 	ConfigSet.String(FlagOutputPath, "", "NFT output path")
 	ConfigSet.String(FlagTxSender, "", "Issuer address(bech32) of nft")
+  ConfigSet.String(FlagChainConfig, "", "chain config file")
 }
 
 type InputArgs struct {
