@@ -7,13 +7,13 @@ go.sum: go.mod
 
 build: go.sum
 ifeq ($(OS),Windows_NT)
-	go build -o build/gongen.exe ./generator/cmd/gongen
+	go build -o build/gontool.exe ./cmd/gontool
 else
-	go build -o build/gongen ./generator/cmd/gongen
+	go build -o build/gontool ./cmd/gontool
 endif
 
 build-linux: go.sum
 	GOOS=linux GOARCH=amd64 $(MAKE) build
 
 install: go.sum
-	go install  ./generator/cmd/gongen
+	go install  ./cmd/gontool

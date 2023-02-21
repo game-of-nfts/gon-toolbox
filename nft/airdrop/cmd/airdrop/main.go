@@ -1,14 +1,13 @@
-package main
+package aridrop
 
 import (
 	"github.com/spf13/cobra"
-	"os"
 
 	"github.com/game-of-nfts/gon-toolbox/nft/airdrop/airdrop"
 	"github.com/game-of-nfts/gon-toolbox/nft/types"
 )
 
-func main() {
+func Commands() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "airdrop",
 		Short: "GoN testnet nft airdrop",
@@ -21,7 +20,5 @@ func main() {
 	_ = rootCmd.MarkFlagRequired(types.FlagTokenFile)
 	_ = rootCmd.MarkFlagRequired(types.FlagChainConfig)
 
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
-	}
+	return rootCmd
 }

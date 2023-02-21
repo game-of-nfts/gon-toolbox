@@ -1,8 +1,6 @@
-package main
+package gongen
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 
 	"github.com/game-of-nfts/gon-toolbox/nft/generator/games/individual"
@@ -11,9 +9,9 @@ import (
 	"github.com/game-of-nfts/gon-toolbox/nft/types"
 )
 
-func main() {
+func Commands() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:   "gongen",
+		Use:   "gen",
 		Short: "GoN testnet nft generator",
 	}
 
@@ -30,7 +28,5 @@ func main() {
 	_ = rootCmd.MarkFlagRequired(types.FlagTxSender)
 	_ = rootCmd.MarkFlagRequired(types.FlagUserFile)
 
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
-	}
+	return rootCmd
 }
