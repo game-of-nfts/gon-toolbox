@@ -101,7 +101,7 @@ func (t Template) parseFlow(flow string) (battons []string, users []types.UserIn
 		case "u":
 			battons = append(battons, users[i].UptickAddress)
 		case "o":
-			battons = append(battons, users[i].UptickAddress)
+			battons = append(battons, users[i].OmniflixAddress)
 		}
 	}
 	return

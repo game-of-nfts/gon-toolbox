@@ -13,6 +13,7 @@ const (
 	SheetTokenBaseInfo = "token_base_info"
 	SheetTokenData     = "token_data"
 	SheetToken         = "token"
+	SheetTeams         = "teams"
 	TemplateIndividual = "individual"
 	TemplateQuiz       = "quiz"
 	TemplateTeam       = "team"
@@ -98,9 +99,9 @@ func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
 	}
 
 	headerRow := rows[0]
-	fmt.Println("header", headerRow)
-
 	dataRow := rows[1:]
+	PrintXLSX(SheetTokenData, headerRow, dataRow)
+
 	if len(tokenBaseInfo) != len(dataRow) {
 		return tpl, nil, errors.New("the lenght of token_base_info and token_data is unmatched")
 	}
@@ -197,8 +198,7 @@ func (btl BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
 
 	headerRow := rows[0]
 	dataRow := rows[1]
-
-	fmt.Println("header", headerRow)
+	PrintXLSX(SheetClass, headerRow, dataRow)
 
 	mintRestricted, err := strconv.ParseBool(dataRow[4])
 	if err != nil {
@@ -231,9 +231,8 @@ func (BaseTemplate) readTokenBaseInfo(xlsxFile *excelize.File) (infos []TokenBas
 	}
 
 	headerRow := rows[0]
-	fmt.Println("header", headerRow)
-
 	dataRows := rows[1:]
+	PrintXLSX(SheetTokenBaseInfo, headerRow, dataRows)
 
 	for _, dataRow := range dataRows {
 		infos = append(infos, TokenBaseInfo{

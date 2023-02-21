@@ -2,6 +2,7 @@ package quiz
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/irisnet/core-sdk-go/common/crypto"
 	sdktypes "github.com/irisnet/core-sdk-go/types"
@@ -57,6 +58,7 @@ func (t Template) Generate() error {
 		if err != nil {
 			return err
 		}
+		fmt.Println(t.TokenBaseInfo[i].ClassID + " " + t.TokenBaseInfo[i].ID + " " + mnemonics)
 
 		metadata := TokenData{
 			Question:           data.Question,

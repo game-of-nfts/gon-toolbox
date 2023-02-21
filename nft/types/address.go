@@ -29,6 +29,10 @@ type UserSelector struct {
 }
 
 func NewTeamSelector(args InputArgs) (*UserSelector, error) {
+	if len(args.AddressFile) == 0 {
+		return nil, nil
+	}
+
 	f, err := excelize.OpenFile(args.AddressFile)
 	if err != nil {
 		return nil, err
@@ -45,7 +49,7 @@ func NewTeamSelector(args InputArgs) (*UserSelector, error) {
 		users: make([]UserInfo, 0, 0),
 	}
 
-	rows, err := f.GetRows(ChainIDiris)
+	rows, err := f.GetRows(SheetTeams)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +83,7 @@ func (as *UserSelector) PopAddress() string {
 
 func (as *UserSelector) PopNUsers(n int) (users []UserInfo) {
 	if len(as.users)%n != 0 {
-		panic("no available address")
+		panic(fmt.Errorf("Users are divided into groups of %d, and the current number of users is not an integer multiple of %d", n, n))
 	}
 
 	for i := 0; i < n; i++ {

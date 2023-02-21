@@ -6,11 +6,11 @@ import (
 )
 
 const (
-	FlagTokenFile   = "token-file"
-	FlagAddressFile = "address-file"
-	FlagOutputPath  = "output-path"
-	FlagTxSender    = "sender"
-	FlagChainConfig = "config-file"
+	FlagTokenFile  = "token-file"
+	FlagUserFile   = "user-file"
+	FlagOutputPath = "output-path"
+	FlagTxSender   = "sender"
+  FlagChainConfig = "config-file"
 )
 
 // common flagsets to add to various functions
@@ -19,10 +19,11 @@ var (
 )
 
 func init() {
-	ConfigSet.String(FlagTokenFile, "", "bech32 encoded account address")
-	ConfigSet.String(FlagAddressFile, "", "description of account")
-	ConfigSet.String(FlagOutputPath, "", "bech32 encoded account address")
-	ConfigSet.String(FlagChainConfig, "", "chain config file")
+	ConfigSet.String(FlagTokenFile, "", "Generate the source files needed for nft")
+	ConfigSet.String(FlagUserFile, "", "User information file")
+	ConfigSet.String(FlagOutputPath, "", "NFT output path")
+	ConfigSet.String(FlagTxSender, "", "Issuer address(bech32) of nft")
+  ConfigSet.String(FlagChainConfig, "", "chain config file")
 }
 
 type InputArgs struct {
@@ -38,7 +39,7 @@ func ReadArgs(cmd *cobra.Command) (InputArgs, error) {
 		return InputArgs{}, err
 	}
 
-	addressFile, err := cmd.Flags().GetString(FlagAddressFile)
+	addressFile, err := cmd.Flags().GetString(FlagUserFile)
 	if err != nil {
 		return InputArgs{}, err
 	}

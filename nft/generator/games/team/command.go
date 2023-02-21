@@ -8,7 +8,7 @@ import (
 func Commands() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "team",
-		Short: "xxxx",
+		Short: "Generate nft of team game type",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			myArgs, err := types.ReadArgs(cmd)
 			if err != nil {
@@ -22,6 +22,5 @@ func Commands() *cobra.Command {
 			return tpl.Generate()
 		},
 	}
-
 	return cmd
 }
