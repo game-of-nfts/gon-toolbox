@@ -28,6 +28,7 @@ func main() {
 	_ = rootCmd.MarkFlagRequired(types.FlagTokenFile)
 	_ = rootCmd.MarkFlagRequired(types.FlagOutputPath)
 	_ = rootCmd.MarkFlagRequired(types.FlagTxSender)
+	_ = rootCmd.MarkFlagRequired(types.FlagUserFile)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

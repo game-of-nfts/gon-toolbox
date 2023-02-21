@@ -23,6 +23,5 @@ func Commands() *cobra.Command {
 			return tpl.Generate()
 		},
 	}
-	_ = cmd.MarkFlagRequired(types.FlagUserFile)
 	return cmd
 }
