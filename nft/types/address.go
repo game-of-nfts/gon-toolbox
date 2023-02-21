@@ -83,7 +83,7 @@ func (as *UserSelector) PopAddress() string {
 
 func (as *UserSelector) PopNUsers(n int) (users []UserInfo) {
 	if len(as.users)%n != 0 {
-		panic("no available address")
+		panic(fmt.Errorf("Users are divided into groups of %d, and the current number of users is not an integer multiple of %d", n, n))
 	}
 
 	for i := 0; i < n; i++ {
