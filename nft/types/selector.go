@@ -54,12 +54,41 @@ func NewTeamSelector(args InputArgs) (*UserSelector, error) {
 		return nil, err
 	}
 
+	var (
+		imap = make(map[string]bool)
+		smap = make(map[string]bool)
+		jmap = make(map[string]bool)
+		umap = make(map[string]bool)
+		omap = make(map[string]bool)
+	)
+
 	for _, row := range rows[1:] {
 		ValidateAddress(PrefixBech32Iris, row[1])
 		ValidateAddress(PrefixBech32Stars, row[2])
 		ValidateAddress(PrefixBech32Juno, row[3])
 		ValidateAddress(PrefixBech32Uptick, row[4])
 		ValidateAddress(PrefixBech32Omniflix, row[5])
+
+		if imap[row[1]] {
+			return nil, fmt.Errorf("duplicate address: %s", row[1])
+		}
+
+		if smap[row[2]] {
+			return nil, fmt.Errorf("duplicate address: %s", row[2])
+		}
+
+		if jmap[row[3]] {
+			return nil, fmt.Errorf("duplicate address: %s", row[3])
+		}
+
+		if umap[row[4]] {
+			return nil, fmt.Errorf("duplicate address: %s", row[4])
+		}
+
+		if omap[row[5]] {
+			return nil, fmt.Errorf("duplicate address: %s", row[5])
+		}
+
 		as.users = append(as.users, UserInfo{
 			TeamName:        row[0],
 			IRISAddress:     row[1],
@@ -68,6 +97,11 @@ func NewTeamSelector(args InputArgs) (*UserSelector, error) {
 			UptickAddress:   row[4],
 			OmniflixAddress: row[5],
 		})
+		imap[row[1]] = true
+		smap[row[2]] = true
+		jmap[row[3]] = true
+		umap[row[4]] = true
+		omap[row[5]] = true
 	}
 	return as, nil
 }
