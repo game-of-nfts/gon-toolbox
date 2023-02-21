@@ -53,6 +53,7 @@ func ReadArgs(cmd *cobra.Command) (InputArgs, error) {
 	if err != nil {
 		return InputArgs{}, err
 	}
+	ValidateAddress(PrefixBech32Iris, sender)
 
 	return InputArgs{
 		TokenFile:   tokenFile,

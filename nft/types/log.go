@@ -3,30 +3,41 @@ package types
 import "fmt"
 
 func PrintXLSX(sheetName string, header []string, body interface{}) {
-	fmt.Println("================================================================================================================================")
-	fmt.Println("--------------------------------------------------------------------------------------------------------------------------------")
-	for i, v := range header {
+	printLine()
+	fmt.Println(sheetName)
+	printLine()
+	for _, v := range header {
 		fmt.Print(v, " | ")
-		if i == len(header)-1 {
-			fmt.Println()
-		}
 	}
-	fmt.Println("--------------------------------------------------------------------------------------------------------------------------------")
-
-	b, ok := body.([][]string)
-	if ok {
-		for _, row := range b {
-			for i, col := range row {
+	println()
+	printLine()
+	switch b := body.(type) {
+	case []string:
+		{
+			for _, col := range b {
 				fmt.Print(col, " | ")
-				if i == len(row)-1 {
-					fmt.Println()
-				}
 			}
-			fmt.Println("--------------------------------------------------------------------------------------------------------------------------------")
+			println()
+			printLine()
 		}
-	} else {
-		fmt.Println(body)
+	case [][]string:
+		{
+			for _, row := range b {
+				for _, col := range row {
+					fmt.Print(col, " | ")
+				}
+				println()
+				printLine()
+			}
+		}
 	}
-	fmt.Println("================================================================================================================================")
+	println()
+}
+
+func printLine() {
+	fmt.Println("--------------------------------------------------------------------------------------------------------------------------------")
+}
+
+func println() {
 	fmt.Println("")
 }
