@@ -10,6 +10,7 @@ const (
 	FlagAddressFile = "address-file"
 	FlagOutputPath  = "output-path"
 	FlagTxSender    = "sender"
+	FlagChainConfig = "config-file"
 )
 
 // common flagsets to add to various functions
@@ -21,6 +22,7 @@ func init() {
 	ConfigSet.String(FlagTokenFile, "", "bech32 encoded account address")
 	ConfigSet.String(FlagAddressFile, "", "description of account")
 	ConfigSet.String(FlagOutputPath, "", "bech32 encoded account address")
+	ConfigSet.String(FlagChainConfig, "", "chain config file")
 }
 
 type InputArgs struct {
