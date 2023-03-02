@@ -76,7 +76,7 @@ func NewAirDropper(tokenXlsx string, generalCfg *Config) (*AirDropper, error) {
 func (ad *AirDropper) ExecAirdrop() error {
 	f, err := excelize.OpenFile(ad.TokenXlsx)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	defer func() {
