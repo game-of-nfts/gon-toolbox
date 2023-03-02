@@ -9,6 +9,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/tendermint/tendermint v0.34.19
 	github.com/xuri/excelize/v2 v2.7.0
+	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2
 )
 
 require (
