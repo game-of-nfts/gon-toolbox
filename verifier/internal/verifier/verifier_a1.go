@@ -1,13 +1,15 @@
 package verifier
 
 import (
+	"errors"
+
 	"github.com/game-of-nfts/gon-toolbox/verifier/internal/chain"
 )
 
 type A1Params struct {
-	ChainID string
-	TxHash  string
-	ClassID string
+	ChainAbbreviation string
+	TxHash            string
+	ClassID           string
 }
 
 type A1Verifier struct {
@@ -27,7 +29,7 @@ func (v A1Verifier) Do(req Request, res chan<- *Respone) {
 		return
 	}
 
-	if len(params.ChainID) == 0 {
+	if len(params.ChainAbbreviation) == 0 {
 		result.Reason = "chainID不能为空"
 		res <- result
 		return
@@ -39,7 +41,7 @@ func (v A1Verifier) Do(req Request, res chan<- *Respone) {
 		return
 	}
 
-	chain := v.r.GetChain(params.ChainID)
+	chain := v.r.GetChain(params.ChainAbbreviation)
 	tx, err := chain.GetTx(params.TxHash)
 	if err != nil {
 		result.Reason = err.Error()
@@ -47,7 +49,7 @@ func (v A1Verifier) Do(req Request, res chan<- *Respone) {
 		return
 	}
 
-	if req.User.Address[params.ChainID] != tx.Sender {
+	if req.User.Address[params.ChainAbbreviation] != tx.Sender {
 		result.Reason = "交易地址非用户注册地址"
 		res <- result
 		return
@@ -74,4 +76,16 @@ func (v A1Verifier) Do(req Request, res chan<- *Respone) {
 
 	result.Point = PointMap[req.TaskNo]
 	res <- result
+}
+
+func (v A1Verifier) BuildParams(rows [][]string) (any, error) {
+	if len(rows) != 1 {
+		return nil, errors.New("非法的格式，只能提交一行数据")
+	}
+	rowFirst := rows[1]
+	return A1Params{
+		ChainAbbreviation: chain.ChainIdAbbreviationIris,
+		TxHash:            rowFirst[0],
+		ClassID:           rowFirst[1],
+	}, nil
 }

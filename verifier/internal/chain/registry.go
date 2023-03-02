@@ -4,6 +4,14 @@ import (
 	"github.com/irisnet/core-sdk-go/types"
 )
 
+const (
+	ChainIdAbbreviationIris     = "i"
+	ChainIdAbbreviationStars    = "s"
+	ChainIdAbbreviationJuno     = "j"
+	ChainIdAbbreviationUptick   = "u"
+	ChainIdAbbreviationOmniflix = "o"
+)
+
 type (
 	TxResult struct {
 		Events types.StringEvents
@@ -47,13 +55,14 @@ type (
 
 func NewRegistry() *Registry {
 	return &Registry{
-		chains: make(map[string]Chain),
+		chains: map[string]Chain{
+			ChainIdAbbreviationIris:     Iris{},
+			ChainIdAbbreviationStars:    Stargaze{},
+			ChainIdAbbreviationJuno:     Juno{},
+			ChainIdAbbreviationUptick:   Uptickd{},
+			ChainIdAbbreviationOmniflix: Omniflix{},
+		},
 	}
-}
-
-func (cr *Registry) Register(chainID string, chain Chain) *Registry {
-	cr.chains[chainID] = chain
-	return cr
 }
 
 func (cr *Registry) GetChain(chainID string) Chain {

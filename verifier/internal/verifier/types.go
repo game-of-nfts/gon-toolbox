@@ -1,13 +1,5 @@
 package verifier
 
-const (
-	ChainIdAbbreviationIris     = "i"
-	ChainIdAbbreviationStars    = "s"
-	ChainIdAbbreviationJuno     = "j"
-	ChainIdAbbreviationUptick   = "u"
-	ChainIdAbbreviationOmniflix = "o"
-)
-
 type (
 	Request struct {
 		TaskNo string
@@ -24,6 +16,7 @@ type (
 
 	Verifier interface {
 		Do(req Request, res chan<- *Respone)
+		BuildParams(params [][]string) (any, error)
 	}
 
 	UserInfo struct {
