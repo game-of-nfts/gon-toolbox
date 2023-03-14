@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-
 	"github.com/irisnet/core-sdk-go/common/bech32"
 )
 
@@ -17,12 +16,12 @@ const (
 func ValidateAddress(hrp, address string) {
 	_, err := bech32.GetFromBech32(address, hrp)
 	if err != nil {
-		panic(
-			fmt.Errorf(
-				"invalid address:%s,err:%s",
-				address,
-				err.Error(),
-			),
+		//panic(
+		fmt.Errorf(
+			"invalid address:%s,err:%s",
+			address,
+			err.Error(),
 		)
+		//)
 	}
 }

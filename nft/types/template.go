@@ -1,9 +1,14 @@
 package types
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
+	"unicode"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -33,6 +38,7 @@ type Class struct {
 	Data             string `json:"data,omitempty"`
 }
 
+// TokenBaseInfo represents a row in token_base_info sheet of the input file
 type TokenBaseInfo struct {
 	ID      string `json:"id"`
 	ClassID string `json:"class_id"`
@@ -41,6 +47,7 @@ type TokenBaseInfo struct {
 	UriHash string `json:"uri_hash,omitempty"`
 }
 
+// TokenInfo represents a row in token_base_info sheet of the output file
 type TokenInfo struct {
 	ID        string `json:"id"`
 	ClassID   string `json:"class_id"`
@@ -61,9 +68,88 @@ type BaseTemplate struct {
 	*UserSelector
 	SheetClass    Class
 	TokenBaseInfo []TokenBaseInfo
+	TokenData     [][]string
 	Args          InputArgs
 }
 
+func NewBaseTemplate(args InputArgs) (BaseTemplate, error) {
+	tpl := BaseTemplate{Args: args}
+	selector, err := NewTeamSelector(args)
+	if err != nil {
+		return tpl, err
+	}
+	tpl.UserSelector = selector
+	return tpl, nil
+}
+
+// PreInitialize reads class sheet and initialize the base_token_info sheet
+func (tpl *BaseTemplate) PreInitialize() error {
+	f, err := excelize.OpenFile(tpl.Args.TokenFile)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = f.Save()
+		if err != nil {
+			fmt.Println("Error saving file:", err)
+			return
+		}
+	}()
+
+	class, err := tpl.readClass(f)
+	if err != nil {
+		return err
+	}
+	tpl.SheetClass = class
+
+	// TODO: make this configurable and optional
+	for i, user := range tpl.UserInfo() {
+		tokenId := convertString(user.Github, tpl.SheetClass.Symbol)
+		github := convertString(user.Github, "")
+		tokenName := tokenId
+		tokenUri := "https://github.com" + github
+		tokenUriHash := sha256.Sum256([]byte(tokenUri))
+		f.SetCellValue(SheetTokenBaseInfo, fmt.Sprintf("A%d", i+2),tokenId)
+		f.SetCellValue(SheetTokenBaseInfo, fmt.Sprintf("B%d", i+2), tpl.SheetClass.ID)
+		f.SetCellValue(SheetTokenBaseInfo, fmt.Sprintf("C%d", i+2), tokenName)
+		f.SetCellValue(SheetTokenBaseInfo, fmt.Sprintf("D%d", i+2), tokenUri)
+		f.SetCellValue(SheetTokenBaseInfo, fmt.Sprintf("E%d", i+2), hex.EncodeToString(tokenUriHash[:]))
+	}
+	return nil
+}
+
+// Initialize reads the base_token_info sheet and token_data sheet
+func (tpl *BaseTemplate) Initialize() error {
+	f, err := excelize.OpenFile(tpl.Args.TokenFile)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+
+	tokenBaseInfo, err := tpl.readTokenBaseInfo(f)
+	if err != nil {
+		return err
+	}
+	tpl.TokenBaseInfo = tokenBaseInfo
+
+	rows, err := f.GetRows(SheetTokenData)
+	if err != nil {
+		return err
+	}
+
+	tpl.TokenData = rows[1:]
+	if len(tpl.TokenBaseInfo) != len(tpl.TokenData) {
+		return errors.New("the length of token_base_info and token_data is unmatched")
+	}
+	return nil
+}
+
+// TODO: remove this function
 func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
 	tpl := BaseTemplate{
 		Args: args,
@@ -103,7 +189,7 @@ func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
 	PrintXLSX(SheetTokenData, headerRow, dataRow)
 
 	if len(tokenBaseInfo) != len(dataRow) {
-		return tpl, nil, errors.New("the lenght of token_base_info and token_data is unmatched")
+		return tpl, nil, errors.New("the length of token_base_info and token_data is unmatched")
 	}
 
 	selector, err := NewTeamSelector(args)
@@ -115,7 +201,8 @@ func NewTemplate(args InputArgs) (BaseTemplate, [][]string, error) {
 	return tpl, dataRow, nil
 }
 
-func (t BaseTemplate) GenerateToken(tokens []TokenInfo) error {
+// GenerateToken generates a token file as airdrop input.
+func (tpl *BaseTemplate) GenerateToken(tokens []TokenInfo) error {
 	f := excelize.NewFile()
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -143,17 +230,17 @@ func (t BaseTemplate) GenerateToken(tokens []TokenInfo) error {
 	f.SetCellValue(SheetClass, "K1", "Data")
 
 	// Set class data
-	f.SetCellValue(SheetClass, "A2", t.SheetClass.ID)
-	f.SetCellValue(SheetClass, "B2", t.SheetClass.Name)
-	f.SetCellValue(SheetClass, "C2", t.SheetClass.Schema)
-	f.SetCellValue(SheetClass, "D2", t.SheetClass.Sender)
-	f.SetCellValue(SheetClass, "E2", t.SheetClass.Symbol)
-	f.SetCellValue(SheetClass, "F2", t.SheetClass.MintRestricted)
-	f.SetCellValue(SheetClass, "G2", t.SheetClass.UpdateRestricted)
-	f.SetCellValue(SheetClass, "H2", t.SheetClass.Description)
-	f.SetCellValue(SheetClass, "I2", t.SheetClass.Uri)
-	f.SetCellValue(SheetClass, "J2", t.SheetClass.UriHash)
-	f.SetCellValue(SheetClass, "K2", t.SheetClass.Data)
+	f.SetCellValue(SheetClass, "A2", tpl.SheetClass.ID)
+	f.SetCellValue(SheetClass, "B2", tpl.SheetClass.Name)
+	f.SetCellValue(SheetClass, "C2", tpl.SheetClass.Schema)
+	f.SetCellValue(SheetClass, "D2", tpl.SheetClass.Sender)
+	f.SetCellValue(SheetClass, "E2", tpl.SheetClass.Symbol)
+	f.SetCellValue(SheetClass, "F2", tpl.SheetClass.MintRestricted)
+	f.SetCellValue(SheetClass, "G2", tpl.SheetClass.UpdateRestricted)
+	f.SetCellValue(SheetClass, "H2", tpl.SheetClass.Description)
+	f.SetCellValue(SheetClass, "I2", tpl.SheetClass.Uri)
+	f.SetCellValue(SheetClass, "J2", tpl.SheetClass.UriHash)
+	f.SetCellValue(SheetClass, "K2", tpl.SheetClass.Data)
 
 	// Create a token sheet.
 	_, err = f.NewSheet(SheetToken)
@@ -183,10 +270,10 @@ func (t BaseTemplate) GenerateToken(tokens []TokenInfo) error {
 	}
 	// Set active sheet of the workbook.
 	f.SetActiveSheet(index)
-	return f.SaveAs(t.Args.OutputPath + "/tokens.xlsx")
+	return f.SaveAs(tpl.Args.OutputPath + "/tokens.xlsx")
 }
 
-func (btl BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
+func (tpl *BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
 	rows, err := xlsxFile.GetRows(SheetClass)
 	if err != nil {
 		return Class{}, err
@@ -213,7 +300,7 @@ func (btl BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
 		ID:               dataRow[0],
 		Name:             dataRow[1],
 		Schema:           dataRow[2],
-		Sender:           btl.Args.Sender,
+		Sender:           tpl.Args.Sender,
 		Symbol:           dataRow[3],
 		MintRestricted:   mintRestricted,
 		UpdateRestricted: updateRestricted,
@@ -224,7 +311,7 @@ func (btl BaseTemplate) readClass(xlsxFile *excelize.File) (Class, error) {
 	}, nil
 }
 
-func (BaseTemplate) readTokenBaseInfo(xlsxFile *excelize.File) (infos []TokenBaseInfo, err error) {
+func (tpl *BaseTemplate) readTokenBaseInfo(xlsxFile *excelize.File) (infos []TokenBaseInfo, err error) {
 	rows, err := xlsxFile.GetRows(SheetTokenBaseInfo)
 	if err != nil {
 		return nil, err
@@ -244,4 +331,17 @@ func (BaseTemplate) readTokenBaseInfo(xlsxFile *excelize.File) (infos []TokenBas
 		})
 	}
 	return
+}
+
+func convertString(input, prefix string) string {
+	input = strings.TrimSpace(input)
+
+	var filtered bytes.Buffer
+	for _, r := range input {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			filtered.WriteRune(r)
+		}
+	}
+
+	return prefix + "/" + filtered.String()
 }

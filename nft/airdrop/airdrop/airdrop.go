@@ -12,16 +12,16 @@ import (
 )
 
 const (
-	SheetClass         = "class"
-	SheetTokenBaseInfo = "token_base_info"
+	SheetClass = "class"
+	SheetToken = "token"
 )
 
 type AirDropper struct {
-	TokenXlsx          string
-	SheetClass         string
-	SheetTokenBaseInfo string
-	Client             *Client
-	Config             *Config
+	TokenXlsx  string
+	SheetClass string
+	SheetToken string
+	Client     *Client
+	Config     *Config
 }
 
 type Config struct {
@@ -65,11 +65,11 @@ func NewAirDropper(tokenXlsx string, generalCfg *Config) (*AirDropper, error) {
 	}
 
 	return &AirDropper{
-		TokenXlsx:          tokenXlsx,
-		SheetClass:         SheetClass,
-		SheetTokenBaseInfo: SheetTokenBaseInfo,
-		Client:             &client,
-		Config:             generalCfg,
+		TokenXlsx:  tokenXlsx,
+		SheetClass: SheetClass,
+		SheetToken: SheetToken,
+		Client:     &client,
+		Config:     generalCfg,
 	}, err
 }
 
@@ -154,7 +154,7 @@ func (ad *AirDropper) BuildIssueMsg(xlsxFile *excelize.File) (sdk.Msg, error) {
 }
 
 func (ad *AirDropper) BuildMintMsgs(xlsxFile *excelize.File) (msgs []sdk.Msg, err error) {
-	rows, err := xlsxFile.GetRows(ad.SheetTokenBaseInfo)
+	rows, err := xlsxFile.GetRows(ad.SheetToken)
 	if err != nil {
 		return nil, err
 	}

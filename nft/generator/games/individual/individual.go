@@ -19,17 +19,27 @@ type Template struct {
 }
 
 func NewTemplate(args types.InputArgs) (types.Template, error) {
-	baseTpl, tokenDataRows, err := types.NewTemplate(args)
+	btl, err := types.NewBaseTemplate(args)
+	if err != nil {
+		return nil, err
+	}
+
+	err = btl.PreInitialize()
+	if err != nil {
+		return nil, err
+	}
+
+	err = btl.Initialize()
 	if err != nil {
 		return nil, err
 	}
 
 	tpl := &Template{
-		BaseTemplate: baseTpl,
-		TokenData:    make([]TokenData, 0, len(baseTpl.TokenBaseInfo)),
+		BaseTemplate: btl,
+		TokenData:    make([]TokenData, 0, len(btl.TokenBaseInfo)),
 	}
 
-	if err = tpl.FillRows(tokenDataRows); err != nil {
+	if err = tpl.FillRows(btl.TokenData); err != nil {
 		return nil, err
 	}
 	return tpl, nil
@@ -48,7 +58,7 @@ func (t Template) Generate() error {
 			Name:      t.TokenBaseInfo[i].Name,
 			URI:       t.TokenBaseInfo[i].URI,
 			Sender:    t.Args.Sender,
-			Recipient: t.PopAddress(),
+			Recipient: t.NextAddress(),
 			UriHash:   t.TokenBaseInfo[i].UriHash,
 			Data:      string(bz),
 		})

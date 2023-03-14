@@ -6,13 +6,14 @@ import (
 	"github.com/xuri/excelize/v2"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
 	GonEvidenceRootPath = "/home/yuandu/Development/GoN/gon-evidence"
 	EvidenceFile        = "evidence.xlsx"
-	SheetInfo           = "Info"
-	OutputPath          = "/home/yuandu/Development/GoN/output.xlsx"
+	SheetInfo           = "teams"
+	OutputPath          = "/home/yuandu/Development/GoN/address.xlsx"
 )
 
 type UserInfoPlus struct {
@@ -79,15 +80,15 @@ func WriteUserInfo(userInfos []*UserInfoPlus, output string) error {
 	f.SetCellValue(SheetInfo, "I1", "Community")
 
 	for i, userInfo := range userInfos {
-		f.SetCellValue(SheetInfo, fmt.Sprintf("A%d", i+2), userInfo.TeamName)
-		f.SetCellValue(SheetInfo, fmt.Sprintf("B%d", i+2), userInfo.IRISAddress)
-		f.SetCellValue(SheetInfo, fmt.Sprintf("C%d", i+2), userInfo.StargazeAddress)
-		f.SetCellValue(SheetInfo, fmt.Sprintf("D%d", i+2), userInfo.JunoAddress)
-		f.SetCellValue(SheetInfo, fmt.Sprintf("E%d", i+2), userInfo.UptickAddress)
-		f.SetCellValue(SheetInfo, fmt.Sprintf("F%d", i+2), userInfo.OmniflixAddress)
-		f.SetCellValue(SheetInfo, fmt.Sprintf("G%d", i+2), userInfo.Account)
-		f.SetCellValue(SheetInfo, fmt.Sprintf("H%d", i+2), userInfo.Discord)
-		f.SetCellValue(SheetInfo, fmt.Sprintf("I%d", i+2), userInfo.Community)
+		f.SetCellValue(SheetInfo, fmt.Sprintf("A%d", i+2), strings.TrimSpace(userInfo.TeamName))
+		f.SetCellValue(SheetInfo, fmt.Sprintf("B%d", i+2), strings.TrimSpace(userInfo.IRISAddress))
+		f.SetCellValue(SheetInfo, fmt.Sprintf("C%d", i+2), strings.TrimSpace(userInfo.StargazeAddress))
+		f.SetCellValue(SheetInfo, fmt.Sprintf("D%d", i+2), strings.TrimSpace(userInfo.JunoAddress))
+		f.SetCellValue(SheetInfo, fmt.Sprintf("E%d", i+2), strings.TrimSpace(userInfo.UptickAddress))
+		f.SetCellValue(SheetInfo, fmt.Sprintf("F%d", i+2), strings.TrimSpace(userInfo.OmniflixAddress))
+		f.SetCellValue(SheetInfo, fmt.Sprintf("G%d", i+2), strings.TrimSpace(userInfo.Account))
+		//f.SetCellValue(SheetInfo, fmt.Sprintf("H%d", i+2), userInfo.Discord)
+		//f.SetCellValue(SheetInfo, fmt.Sprintf("I%d", i+2), userInfo.Community)
 	}
 
 	f.SetActiveSheet(index)
@@ -107,22 +108,22 @@ func ReadUserInfo(acc string) (*UserInfoPlus, error) {
 		}
 	}()
 
-	rows, err := f.GetRows(SheetInfo)
+	rows, err := f.GetRows("Info")
 	if err != nil {
 		fmt.Printf("unable to open %s\n", path)
 		return nil, err
 	}
 
 	dataRows := rows[1:]
-	community := "none"
+	//community := "none"
 	for _, dataRow := range dataRows {
 		if dataRow == nil || dataRow[0] == "team name" {
 			continue
 		}
 
-		if len(dataRow) == 8 {
-			community = dataRow[7]
-		}
+		//if len(dataRow) == 8 {
+		//	community = dataRow[7]
+		//}
 
 		return &UserInfoPlus{
 			UserInfo: types.UserInfo{
@@ -133,9 +134,9 @@ func ReadUserInfo(acc string) (*UserInfoPlus, error) {
 				UptickAddress:   dataRow[4],
 				OmniflixAddress: dataRow[5],
 			},
-			Account:   acc,
-			Discord:   dataRow[6],
-			Community: community,
+			Account: acc,
+			//Discord:   dataRow[6],
+			//Community: community,
 		}, nil
 	}
 	return nil, nil

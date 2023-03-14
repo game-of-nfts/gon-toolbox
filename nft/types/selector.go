@@ -22,6 +22,7 @@ type UserInfo struct {
 	JunoAddress     string `json:"juno_address"`
 	UptickAddress   string `json:"uptick_address"`
 	OmniflixAddress string `json:"omniflix_address"`
+	Github          string `json:"github_account"`
 }
 
 type UserSelector struct {
@@ -73,10 +74,11 @@ func NewTeamSelector(args InputArgs) (*UserSelector, error) {
 			return nil, fmt.Errorf("duplicate address: %s", row[1])
 		}
 
-		if smap[row[2]] {
-			return nil, fmt.Errorf("duplicate address: %s", row[2])
-		}
-
+		// NOTE: temporarily uncomment this check
+		//if smap[row[2]] {
+		//	return nil, fmt.Errorf("duplicate address: %s", row[2])
+		//}
+		//
 		if jmap[row[3]] {
 			return nil, fmt.Errorf("duplicate address: %s", row[3])
 		}
@@ -96,6 +98,7 @@ func NewTeamSelector(args InputArgs) (*UserSelector, error) {
 			JunoAddress:     row[3],
 			UptickAddress:   row[4],
 			OmniflixAddress: row[5],
+			Github:          row[6],
 		})
 		imap[row[1]] = true
 		smap[row[2]] = true
@@ -106,6 +109,22 @@ func NewTeamSelector(args InputArgs) (*UserSelector, error) {
 	return as, nil
 }
 
+func (as *UserSelector) UserInfo() []UserInfo {
+	return as.users
+}
+
+// NextAddress sequentially returns an address from the selector
+func (as *UserSelector) NextAddress() string {
+	if len(as.users) == 0 {
+		panic("no available address")
+	}
+
+	address := as.users[0].IRISAddress
+	as.users = as.users[1:]
+	return address
+}
+
+// PopAddress pop a random address from the selector, and remove it from the selector
 func (as *UserSelector) PopAddress() string {
 	if len(as.users) == 0 {
 		panic("no available address")
