@@ -3,6 +3,7 @@ package quiz
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/xuri/excelize/v2"
 
 	"github.com/irisnet/core-sdk-go/common/crypto"
 	sdktypes "github.com/irisnet/core-sdk-go/types"
@@ -28,23 +29,44 @@ type Template struct {
 }
 
 func NewTemplate(args types.InputArgs) (types.Template, error) {
-	baseTpl, tokenDataRows, err := types.NewTemplate(args)
+	btl, err := types.NewBaseTemplate(args)
 	if err != nil {
 		return nil, err
 	}
 
 	tpl := &Template{
-		BaseTemplate: baseTpl,
-		Rows:         make([]Row, 0, len(baseTpl.TokenBaseInfo)),
+		BaseTemplate: btl,
+		Rows:    make([]Row, 0),
 	}
-	if err = tpl.FillRows(tokenDataRows); err != nil {
+
+	err = tpl.PreInitialize(tpl.GetPreInitializer())
+	if err != nil {
+		return nil, err
+	}
+
+	err = tpl.Initialize()
+	if err != nil {
+		return nil, err
+	}
+
+	if err = tpl.FillRows(tpl.BaseTemplate.TokenData); err != nil {
 		return nil, err
 	}
 	return tpl, nil
 }
 
+func (t Template) GetPreInitializer() types.PreInitializer {
+	return func(tpl *types.BaseTemplate, f *excelize.File) {
+		for i := 0; i < 100; i++ {
+			f.SetCellValue(types.SheetTokenBaseInfo, fmt.Sprintf("A%d", i+2), fmt.Sprintf("quiz%03d", i+1))
+			f.SetCellValue(types.SheetTokenBaseInfo, fmt.Sprintf("B%d", i+2), tpl.SheetClass.ID)
+			f.SetCellValue(types.SheetTokenBaseInfo, fmt.Sprintf("C%d", i+2), fmt.Sprintf("quiz%03d", i+1))
+		}
+	}
+}
+
 func (t Template) Generate() error {
-	tokens := make([]types.TokenInfo, 0, len(t.Rows))
+	tokens := make([]types.TokenInfo, 0, len(t.BaseTemplate.TokenData))
 	for i, data := range t.Rows {
 		keyManager, err := crypto.NewAlgoKeyManager("secp256k1")
 		if err != nil {

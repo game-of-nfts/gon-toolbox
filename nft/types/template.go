@@ -1,16 +1,10 @@
 package types
 
 import (
-	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
-	"unicode"
-
 	"github.com/xuri/excelize/v2"
+	"strconv"
 )
 
 const (
@@ -72,6 +66,8 @@ type BaseTemplate struct {
 	Args          InputArgs
 }
 
+type PreInitializer func(tpl *BaseTemplate, file *excelize.File)
+
 func NewBaseTemplate(args InputArgs) (BaseTemplate, error) {
 	tpl := BaseTemplate{Args: args}
 	selector, err := NewTeamSelector(args)
@@ -83,7 +79,7 @@ func NewBaseTemplate(args InputArgs) (BaseTemplate, error) {
 }
 
 // PreInitialize reads class sheet and initialize the base_token_info sheet
-func (tpl *BaseTemplate) PreInitialize() error {
+func (tpl *BaseTemplate) PreInitialize(piz PreInitializer) error {
 	f, err := excelize.OpenFile(tpl.Args.TokenFile)
 	if err != nil {
 		return err
@@ -101,20 +97,7 @@ func (tpl *BaseTemplate) PreInitialize() error {
 		return err
 	}
 	tpl.SheetClass = class
-
-	// TODO: make this configurable and optional
-	for i, user := range tpl.UserInfo() {
-		tokenId := convertString(user.Github, tpl.SheetClass.Symbol)
-		github := convertString(user.Github, "")
-		tokenName := tokenId
-		tokenUri := "https://github.com" + github
-		tokenUriHash := sha256.Sum256([]byte(tokenUri))
-		f.SetCellValue(SheetTokenBaseInfo, fmt.Sprintf("A%d", i+2),tokenId)
-		f.SetCellValue(SheetTokenBaseInfo, fmt.Sprintf("B%d", i+2), tpl.SheetClass.ID)
-		f.SetCellValue(SheetTokenBaseInfo, fmt.Sprintf("C%d", i+2), tokenName)
-		f.SetCellValue(SheetTokenBaseInfo, fmt.Sprintf("D%d", i+2), tokenUri)
-		f.SetCellValue(SheetTokenBaseInfo, fmt.Sprintf("E%d", i+2), hex.EncodeToString(tokenUriHash[:]))
-	}
+	piz(tpl, f)
 	return nil
 }
 
@@ -331,17 +314,4 @@ func (tpl *BaseTemplate) readTokenBaseInfo(xlsxFile *excelize.File) (infos []Tok
 		})
 	}
 	return
-}
-
-func convertString(input, prefix string) string {
-	input = strings.TrimSpace(input)
-
-	var filtered bytes.Buffer
-	for _, r := range input {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			filtered.WriteRune(r)
-		}
-	}
-
-	return prefix + "/" + filtered.String()
 }

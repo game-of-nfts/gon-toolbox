@@ -3,3 +3,4 @@
 test/
 nft/airdrop/airdrop/*_test.go
 nft/generator/games/individual/*_test.go
+nft/generator/games/quiz/*_test.go
