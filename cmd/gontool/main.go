@@ -7,7 +7,6 @@ import (
 
 	aridrop "github.com/game-of-nfts/gon-toolbox/nft/airdrop/cmd/airdrop"
 	"github.com/game-of-nfts/gon-toolbox/nft/generator/cmd/gongen"
-	verifier "github.com/game-of-nfts/gon-toolbox/verifier/cmd"
 )
 
 func main() {
@@ -20,7 +19,6 @@ func main() {
 		gongen.Commands(),
 		aridrop.Commands(),
 		CryptoCommands(),
-		verifier.Commands(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {

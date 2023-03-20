@@ -36,17 +36,17 @@ func NewTemplate(args types.InputArgs) (types.Template, error) {
 		TokenData:    make([]TokenData, 0),
 	}
 
-	err = btl.PreInitialize(tpl.GetPreInitializer())
+	err = tpl.PreInitialize(tpl.GetPreInitializer())
 	if err != nil {
 		return nil, err
 	}
 
-	err = btl.Initialize()
+	err = tpl.Initialize()
 	if err != nil {
 		return nil, err
 	}
 
-	if err = tpl.FillRows(btl.TokenData); err != nil {
+	if err = tpl.FillRows(tpl.BaseTemplate.TokenData); err != nil {
 		return nil, err
 	}
 	return tpl, nil
